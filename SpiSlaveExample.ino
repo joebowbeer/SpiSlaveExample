@@ -1,9 +1,14 @@
 // SPI Slave Example, using interrupt for SS pin
-// Runs on Arduino Uno
+// Runs on AVR, including LightBlue Bean(+)
 // Adapted from Nick Gammon
 // http://www.gammon.com.au/spi
 
-#include <PinChangeInterrupt.h>
+#if defined(IS_BEAN)
+  #include <PinChangeInt.h>
+#else
+  //#include <PinChangeInterrupt.h>
+  #include <EnableInterrupt.h>
+#endif
 
 // operation is 'a' (add) or 'm' (multiply)
 volatile byte operation = 0;
@@ -18,10 +23,16 @@ void setup() {
   // turn on interrupts
   SPCR |= _BV(SPIE);
 
-  // Attach interrupt for SS falling edge using PinChangeInterrupt.
-  // If not using PCINT library, connect SS to pin 2:
-  //attachInterrupt(digitalPinToInterrupt(2), ss_falling, FALLING);
-  attachPCINT(digitalPinToPCINT(SS), ss_falling, FALLING);
+  // Attach interrupt for SS falling edge.
+  // NOTE: If not using a port-change interrupt library, connect SS
+  // to pin 2 and attach external interrupt:
+  // attachInterrupt(digitalPinToInterrupt(2), ss_falling, FALLING);
+#if defined(IS_BEAN)
+  attachPinChangeInterrupt(SS, ss_falling, FALLING);
+#else
+  //attachPCINT(digitalPinToPCINT(SS), ss_falling, FALLING);
+  enableInterrupt(SS, ss_falling, FALLING);
+#endif
 }
 
 void loop() {
